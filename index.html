@@ -16,15 +16,15 @@ window.onload = function() {
     }
 
     var navMeshLines = [];
-    var wallLines = [];
+    var wallRectangles = [];
     function create() {
         var map = game.add.tilemap("map");
 
         var navMeshLayer = getLayerByName(map, "nav mesh");
-        navMeshLines = getObjectsAsLines(navMeshLayer);
+        navMeshLines = getPolygonObjectsAsLines(navMeshLayer);
 
-        var wallLayer = getLayerByName(map, "wall");
-
+        var wallLayer = getLayerByName(map, "walls");
+        wallRectangles = getRectangleObjectAsPhaserRectangle(wallLayer);
     }
 
     var getLayerByName = function(map, layerName) {
@@ -32,7 +32,19 @@ window.onload = function() {
         return (objectLayers.hasOwnProperty(layerName)) ? objectLayers[layerName] : null;
     }
 
-    var getObjectsAsLines = function(layer) {
+    var getRectangleObjectAsPhaserRectangle = function(layer) {
+        var rectangles = [];
+        for (var i = 0; i < layer.length; i++) {
+            var object = layer[i];
+            var rect = new Phaser.Rectangle(object.x, object.y, object.width, object.height);
+
+            rectangles.push(rect);
+        }
+
+        return rectangles;
+    }
+
+    var getPolygonObjectsAsLines = function(layer) {
         var lines = [];
         for (var i = 0; i < layer.length; i++) {
             var object = layer[i];
@@ -69,8 +81,12 @@ window.onload = function() {
     }
 
     function render() {
+        for (var i = 0; i < wallRectangles.length; i++) {
+            game.debug.geom(wallRectangles[i], "#0066FF");
+        }
+
         for (var i = 0; i < navMeshLines.length; i++) {
-            game.debug.geom(navMeshLines[i], "#cfffff");
+            game.debug.geom(navMeshLines[i], "#FF6600");
         }
     }
 
