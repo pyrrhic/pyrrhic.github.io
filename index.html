@@ -37,8 +37,10 @@ window.onload = function() {
         for (var i = 0; i < layer.length; i++) {
             var object = layer[i];
 
-            var points = [][];
+            var points = [];
             for (var poly = 0; poly < object.polygon.length; poly++) {
+                points[poly] = [];
+
                 var x = object.polygon[poly][0] + object.x;
                 points[poly].push(x);
 
@@ -46,9 +48,16 @@ window.onload = function() {
                 points[poly].push(y);
             }
 
+            //when we have 2 points, draw a line. so get 1 pt, wait, get 2nd point, draw from 2nd to 1st. etc.
             for (var p = 0; p < points.length; p++) {
-                var line = new Phaser.Line(x1, y1, x2, y2);
-                lines.push(line);
+                if (p > 0) {
+                    var line = new Phaser.Line(points[p][0], points[p][1], points[p-1][0], points[p-1][1]);
+                    lines.push(line);
+                }
+                if ((p + 1) == points.length) { //if last point, draw line from last to first point
+                    var line = new Phaser.Line(points[p][0], points[p][1], points[0][0], points[0][1]);
+                    lines.push(line);
+                }
             }
         }
 
