@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>hello phaser!</title>
+        <script src="js/phaser.js"></script>
+    </head>
+<body>
+
+<script type="text/javascript">
+window.onload = function() {
+    var game = new Phaser.Game(800, 800, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update, render: render });
+
+    function preload() {
+        game.load.tilemap("map", "assets/map.json", null, Phaser.Tilemap.TILED_JSON);
+    }
+
+    var navMeshLines = [];
+    var wallLines = [];
+    function create() {
+        var map = game.add.tilemap("map");
+
+        var navMeshLayer = getLayerByName(map, "nav mesh");
+        navMeshLines = getObjectsAsLines(navMeshLayer);
+
+        var wallLayer = getLayerByName(map, "wall");
+
+    }
+
+    var getLayerByName = function(map, layerName) {
+        var objectLayers = map.objects;
+        return (objectLayers.hasOwnProperty(layerName)) ? objectLayers[layerName] : null;
+    }
+
+    var getObjectsAsLines = function(layer) {
+        var lines = [];
+        for (var i = 0; i < layer.length; i++) {
+            var object = layer[i];
+
+            var points = [][];
+            for (var poly = 0; poly < object.polygon.length; poly++) {
+                var x = object.polygon[poly][0] + object.x;
+                points[poly].push(x);
+
+                var y = object.polygon[poly][1] + object.y;
+                points[poly].push(y);
+            }
+
+            for (var p = 0; p < points.length; p++) {
+                var line = new Phaser.Line(x1, y1, x2, y2);
+                lines.push(line);
+            }
+        }
+
+        return lines;
+    }
+
+    function update() {
+
+    }
+
+    function render() {
+        for (var i = 0; i < navMeshLines.length; i++) {
+            game.debug.geom(navMeshLines[i], "#cfffff");
+        }
+    }
+
+}
+</script>
+
+</body>
+</html>
