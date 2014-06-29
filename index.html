@@ -16,10 +16,14 @@ window.onload = function() {
         game.load.tilemap("map", "assets/map.json", null, Phaser.Tilemap.TILED_JSON);
     }
 
+    var cursors;
+    var navMesh;
     var player;
     var renderableNodes;
     var navMeshLines = [];
     function create() {
+        cursors = game.input.keyboard.createCursorKeys();
+
         game.physics.startSystem(Phaser.Physics.ARCADE);
 
         player = addPlayerToGame();
@@ -30,20 +34,23 @@ window.onload = function() {
     }
 
     function update() {
-        // player.body.velocity.y = 0;
-        // player.body.velocity.x = 0;
-        // if(cursors.up.isDown) {
-        //     player.body.velocity.y = -100;
-        // }
-        // if(cursors.down.isDown) {
-        //     player.body.velocity.y = 100;
-        // }
-        // if(cursors.left.isDown) {
-        //     player.body.velocity.x = -100;
-        // }
-        // if(cursors.right.isDown) {
-        //     player.body.velocity.x = 100;
-        // }
+        var node = navMesh.getNodeEntityIsIn(player.x, player.y);
+        //console.log(node);
+
+        player.body.velocity.y = 0;
+        player.body.velocity.x = 0;
+        if(cursors.up.isDown) {
+            player.body.velocity.y = -100;
+        }
+        if(cursors.down.isDown) {
+            player.body.velocity.y = 100;
+        }
+        if(cursors.left.isDown) {
+            player.body.velocity.x = -100;
+        }
+        if(cursors.right.isDown) {
+            player.body.velocity.x = 100;
+        }
     }
 
     function render() {
@@ -66,7 +73,7 @@ window.onload = function() {
         var wallLayer = ns.mapLoader.getLayerByName(map, "walls");
         addWallsToGame(wallLayer);
 
-        var navMesh = new ns.NavMesh();
+        navMesh = new ns.NavMesh();
         navMesh.buildNavMesh(navMeshLayer);
 
         renderableNodes = renderableNodes(navMesh);

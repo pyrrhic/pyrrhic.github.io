@@ -54,16 +54,13 @@ ns.mapLoader = function() {
 } ();
 
 //path finder package ported from my Java implementation
-ns.Vector2 = function(x, y) {
-	this.x = x;
-	this.y = y;
-}
-
 ns.PolygonUtils = function() {
 	return {
 		triangleContains: function(currentPoint, vertices) {
 			//if (!vertices instanceof Array) {console.error("Param vertices is not of type Array.");}
 			//if (!currentPoint instanceof Array) {console.error("Param currentPoint is not of type Array.");}
+			currentPoint.x = currentPoint[0];
+			currentPoint.y = currentPoint[1];
 
 			var p1 = {};
 			p1.x = vertices[0][0];
@@ -141,7 +138,8 @@ ns.Node = function (x, y) {
 	}
 
 	this.addNeighbor = function(nodeParam) {
-		neighbors[nodeObj.getKey()] = nodeObj;
+		var paramKey = nodeParam.getKey();
+		this.neighbors[paramKey] = nodeParam;
 	}
 }
 
@@ -203,5 +201,23 @@ ns.NavMesh = function() {
 				}
 			}
 		}
+	}
+
+	this.getNodeEntityIsIn = function(x, y) {
+		var keys = Object.keys(nodes);
+		for (var i = 0; i < keys.length; i++) {
+			var node = nodes[keys[i]];
+			if(ns.PolygonUtils.triangleContains([x,y], node.vertices)) {
+				return node;
+			}
+		}
+
+		return null;
+	}
+}
+
+ns.PathFinder = function() {
+	this.findPath = function(startNode, endNode) {
+
 	}
 }
