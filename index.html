@@ -4,92 +4,116 @@
         <meta charset="UTF-8" />
         <title>hello phaser!</title>
         <script src="js/phaser.js"></script>
+        <script src="js/game/myNameSpace.js"></script>
     </head>
 <body>
 
 <script type="text/javascript">
 window.onload = function() {
-    var game = new Phaser.Game(800, 800, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update, render: render });
+    var game = new Phaser.Game(800, 800, Phaser.AUTO, 'what is this text', { preload: preload, create: create, update: update, render: render });
 
     function preload() {
         game.load.tilemap("map", "assets/map.json", null, Phaser.Tilemap.TILED_JSON);
     }
 
+    var player;
+    var renderableNodes;
     var navMeshLines = [];
-    var wallRectangles = [];
     function create() {
-        var map = game.add.tilemap("map");
+        game.physics.startSystem(Phaser.Physics.ARCADE);
 
-        var navMeshLayer = getLayerByName(map, "nav mesh");
-        navMeshLines = getPolygonObjectsAsLines(navMeshLayer);
+        player = addPlayerToGame();
+        player.anchor.setTo(0.5, 0.5);
+        game.physics.arcade.enableBody(player);
 
-        var wallLayer = getLayerByName(map, "walls");
-        wallRectangles = getRectangleObjectAsPhaserRectangle(wallLayer);
-    }
-
-    var getLayerByName = function(map, layerName) {
-        var objectLayers = map.objects;
-        return (objectLayers.hasOwnProperty(layerName)) ? objectLayers[layerName] : null;
-    }
-
-    var getRectangleObjectAsPhaserRectangle = function(layer) {
-        var rectangles = [];
-        for (var i = 0; i < layer.length; i++) {
-            var object = layer[i];
-            var rect = new Phaser.Rectangle(object.x, object.y, object.width, object.height);
-
-            rectangles.push(rect);
-        }
-
-        return rectangles;
-    }
-
-    var getPolygonObjectsAsLines = function(layer) {
-        var lines = [];
-        for (var i = 0; i < layer.length; i++) {
-            var object = layer[i];
-
-            var points = [];
-            for (var poly = 0; poly < object.polygon.length; poly++) {
-                points[poly] = [];
-
-                var x = object.polygon[poly][0] + object.x;
-                points[poly].push(x);
-
-                var y = object.polygon[poly][1] + object.y;
-                points[poly].push(y);
-            }
-
-            //when we have 2 points, draw a line. so get 1 pt, wait, get 2nd point, draw from 2nd to 1st. etc.
-            for (var p = 0; p < points.length; p++) {
-                if (p > 0) {
-                    var line = new Phaser.Line(points[p][0], points[p][1], points[p-1][0], points[p-1][1]);
-                    lines.push(line);
-                }
-                if ((p + 1) == points.length) { //if last point, draw line from last to first point
-                    var line = new Phaser.Line(points[p][0], points[p][1], points[0][0], points[0][1]);
-                    lines.push(line);
-                }
-            }
-        }
-
-        return lines;
+        mapStuff();
     }
 
     function update() {
-
+        // player.body.velocity.y = 0;
+        // player.body.velocity.x = 0;
+        // if(cursors.up.isDown) {
+        //     player.body.velocity.y = -100;
+        // }
+        // if(cursors.down.isDown) {
+        //     player.body.velocity.y = 100;
+        // }
+        // if(cursors.left.isDown) {
+        //     player.body.velocity.x = -100;
+        // }
+        // if(cursors.right.isDown) {
+        //     player.body.velocity.x = 100;
+        // }
     }
 
     function render() {
-        for (var i = 0; i < wallRectangles.length; i++) {
-            game.debug.geom(wallRectangles[i], "#0066FF");
-        }
-
         for (var i = 0; i < navMeshLines.length; i++) {
             game.debug.geom(navMeshLines[i], "#FF6600");
         }
+
+        for (var i = 0; i < renderableNodes.length; i++) {
+            game.debug.geom(renderableNodes[i], "#FF6600");
+        }
     }
 
+    // MAP STUFF
+    function mapStuff() {
+        var map = game.add.tilemap("map");
+
+        var navMeshLayer = ns.mapLoader.getLayerByName(map, "nav mesh");
+        navMeshLines = ns.mapLoader.getPolygonObjectsAsLines(navMeshLayer);
+
+        var wallLayer = ns.mapLoader.getLayerByName(map, "walls");
+        addWallsToGame(wallLayer);
+
+        var navMesh = new ns.NavMesh();
+        navMesh.buildNavMesh(navMeshLayer);
+
+        renderableNodes = renderableNodes(navMesh);
+    }
+
+    function renderableNodes(navMesh) {
+        this.nodes = [];
+        var nodes = navMesh.getNodes();
+
+        var nodeKeys = Object.keys(nodes);
+        for (var k = 0; k < nodeKeys.length; k++) {
+            var node = nodes[nodeKeys[k]];
+            var circle = new Phaser.Circle(node.x, node.y, 5);
+            this.nodes.push(circle);
+        }
+
+        return this.nodes;
+    }
+
+    // STUFF?
+    function addPlayerToGame() {
+        var width = 10;
+        var height = 10;
+
+        var x = 400;
+        var y = 100;
+
+        var bmd = createRectangleBMD(width, height, "white");
+        return game.add.sprite(x, y, bmd);
+    }
+
+    function addWallsToGame(rectangleLayer) {
+        for (var i = 0; i < rectangleLayer.length; i++) {
+            var object = rectangleLayer[i];
+
+            var bmd = createRectangleBMD(object.width, object.height, "blue");
+            game.add.sprite(object.x, object.y, bmd);
+        }
+    }
+
+    function createRectangleBMD(width, height, color) {
+        var bmd = game.add.bitmapData(width, height);
+        bmd.ctx.fillStyle = color;
+        bmd.ctx.fillRect(0, 0, width, height);
+
+        return bmd;
+    }
 }
 </script>
 
