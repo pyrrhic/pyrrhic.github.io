@@ -10,47 +10,66 @@
 
 <script type="text/javascript">
 window.onload = function() {
-    var game = new Phaser.Game(800, 800, Phaser.AUTO, 'what is this text', { preload: preload, create: create, update: update, render: render });
+    var game = new Phaser.Game(800, 800, Phaser.CANVAS, 'what is this text', { preload: preload, create: create, update: update, render: render });
 
     function preload() {
         game.load.tilemap("map", "assets/map.json", null, Phaser.Tilemap.TILED_JSON);
     }
 
-    var cursors;
+    var walls;
     var navMesh;
     var player;
+    var target = [];
     var renderableNodes;
     var navMeshLines = [];
     function create() {
-        cursors = game.input.keyboard.createCursorKeys();
-
         game.physics.startSystem(Phaser.Physics.ARCADE);
 
         player = addPlayerToGame();
         player.anchor.setTo(0.5, 0.5);
         game.physics.arcade.enableBody(player);
 
-        mapStuff();
+        walls = game.add.group();
+        walls.enableBody = true;
+
+        var map = game.add.tilemap("map");
+
+        var navMeshLayer = ns.mapLoader.getLayerByName(map, "nav mesh");
+        navMeshLines = ns.mapLoader.getPolygonObjectsAsLines(navMeshLayer);
+
+        var wallLayer = ns.mapLoader.getLayerByName(map, "walls");
+        addWallsToGame(wallLayer);
+
+        navMesh = new ns.NavMesh();
+        navMesh.buildNavMesh(navMeshLayer);
+        navMesh.resetParentsAndCosts();
+
+        renderableNodes = renderableNodes(navMesh);
+
+        game.input.onDown.add(function() {
+            target.push(game.input.mousePointer.x);
+            target.push(game.input.mousePointer.y);
+        }, window);
     }
 
     function update() {
-        var node = navMesh.getNodeEntityIsIn(player.x, player.y);
-        //console.log(node);
+        game.physics.arcade.collide(player, walls);
 
-        player.body.velocity.y = 0;
-        player.body.velocity.x = 0;
-        if(cursors.up.isDown) {
-            player.body.velocity.y = -100;
+        var node = navMesh.getNodePositionIsIn(player.x, player.y);
+        if (target.length > 0) {
+            var targetNode = navMesh.getNodePositionIsIn(target[0], target[1]);
+            console.log(targetNode);
+
+            var path = ns.PathFinder.findPath(node, targetNode);
+            navMesh.resetParentsAndCosts();
+            console.log(path);
+
+            target = [];
         }
-        if(cursors.down.isDown) {
-            player.body.velocity.y = 100;
-        }
-        if(cursors.left.isDown) {
-            player.body.velocity.x = -100;
-        }
-        if(cursors.right.isDown) {
-            player.body.velocity.x = 100;
-        }
+
+        // player.body.velocity.y = 0;
+        // player.body.velocity.x = 0;
+        // player.body.velocity.y = -100;
     }
 
     function render() {
@@ -63,20 +82,9 @@ window.onload = function() {
         }
     }
 
-    // MAP STUFF
-    function mapStuff() {
-        var map = game.add.tilemap("map");
+    //NON-PHASER ENGINE FUNCTIONS
+    function movePlayerTowardsTargetNode(player, targetNode) {
 
-        var navMeshLayer = ns.mapLoader.getLayerByName(map, "nav mesh");
-        navMeshLines = ns.mapLoader.getPolygonObjectsAsLines(navMeshLayer);
-
-        var wallLayer = ns.mapLoader.getLayerByName(map, "walls");
-        addWallsToGame(wallLayer);
-
-        navMesh = new ns.NavMesh();
-        navMesh.buildNavMesh(navMeshLayer);
-
-        renderableNodes = renderableNodes(navMesh);
     }
 
     function renderableNodes(navMesh) {
@@ -93,7 +101,6 @@ window.onload = function() {
         return this.nodes;
     }
 
-    // STUFF?
     function addPlayerToGame() {
         var width = 10;
         var height = 10;
@@ -110,7 +117,10 @@ window.onload = function() {
             var object = rectangleLayer[i];
 
             var bmd = createRectangleBMD(object.width, object.height, "blue");
-            game.add.sprite(object.x, object.y, bmd);
+
+            var wall = walls.create(object.x, object.y, bmd);
+            wall.body.immovable = true;
+            // game.add.sprite(object.x, object.y, bmd);
         }
     }
 

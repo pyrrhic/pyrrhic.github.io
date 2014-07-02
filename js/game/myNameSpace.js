@@ -191,7 +191,8 @@ ns.NavMesh = function() {
 				var x = 0;
 				var y = 1;
 				for (var pc = 0; pc < currentVertices.length; pc++) {
-					if (ns.PolygonUtils.triangleContains(currentVertices[pc], inspectNode.vertices)) {
+					if (ns.PolygonUtils.triangleContains(currentVertices[pc], inspectNode.vertices) &&
+					    currentNode.getKey() !== inspectNode.getKey()) {
 						numSharedVertices++;
 					}
 				}
@@ -203,7 +204,7 @@ ns.NavMesh = function() {
 		}
 	}
 
-	this.getNodeEntityIsIn = function(x, y) {
+	this.getNodePositionIsIn = function(x, y) {
 		var keys = Object.keys(nodes);
 		for (var i = 0; i < keys.length; i++) {
 			var node = nodes[keys[i]];
@@ -214,10 +215,125 @@ ns.NavMesh = function() {
 
 		return null;
 	}
+
+	this.resetParentsAndCosts = function() {
+		var keys = Object.keys(nodes);
+		for (var i = 0; i < keys.length; i++) {
+			var node = nodes[keys[i]];
+			node.parent = null;
+			node.cost = 999;
+		}
+	}
 }
 
 ns.PathFinder = function() {
-	this.findPath = function(startNode, endNode) {
+	var buildPath = function(goalNode) {
+		var path = [];
+		path.add(goalNode);
+		var parent = goalNode.parent;
 
+		while (parent !== null) {
+			path.push(parent);
+			parent = parent.parent;
+		}
+
+		return path;
 	}
-}
+
+	var calculateCost = function(startNode, endNode) {
+		return Math.abs(startNode.x - endNode.x) + Math.abs(startNode.y - endNode.y);
+	}
+
+	var getUnexploredNeighbors = function(node, explored) {
+		var unexploredNeighbors = [];
+
+		var keys = Object.keys(node.neighbors);
+		for (var i = 0; i < keys.length; i++) {
+			var neighbor = node.neighbors[keys[i]];
+			if (!associativeArrayContainsNode(neighbor, explored)) {	
+				unexploredNeighbors.push(neighbor);
+			}
+		}
+
+		return unexploredNeighbors;
+	}
+
+	var associativeArrayContainsNode = function(node, arr) {
+		var keys = Object.keys(arr);
+		for (var i = 0; i < keys.length; i++) {
+			if (arr[keys[i]].getKey() === node.getKey()) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	var arrayContainsNode = function(node, arr) {
+		for (var i = 0; i < arr.length; i++) {
+			if (arr[i].getKey() === node.getKey()) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	var chooseNode = function(reachable) {
+		var minCost = 99999;
+		var bestNode = null;
+
+		for (var i = 0; i < reachable.length; i++) {
+			var node = reachable[i];
+			if (node.cost < minCost) {
+				minCost = node.cost;
+				bestNode = node;
+			}
+		}
+
+		return bestNode;
+	}
+
+	return {
+		 findPath: function(startNode, goalNode) {
+			if (startNode.x == goalNode.x && startNode.y == goalNode.y) { 
+				return []; 
+			}
+
+			var reachable = [];
+			var explored = [];
+
+			startNode.cost = 1;
+			reachable.push(startNode);
+
+			while (reachable.length > 0) {
+				var node = chooseNode(reachable);
+
+				var index = reachable.map(function(n) { return n.getKey(); }).indexOf(node.getKey());
+				reachable.splice(index, 1);
+
+				explored.push(node);
+
+				var newReachable = getUnexploredNeighbors(node, explored);
+				for (var i = 0; i < newReachable.length; i++) {
+					var newNode = newReachable[i];
+					if (!arrayContainsNode(newNode, reachable)) {
+						reachable.push(newNode);
+					}
+
+					var tempCost = node.cost + calculateCost(node, newNode);
+					if (tempCost < newNode.cost) {
+						newNode.parent = node;
+						newNode.cost = tempCost;
+					}
+				}
+
+				if (node.getKey() === goalNode.getKey()) {
+					return buildPath(goalNode);
+				}
+			}
+
+			return [];
+		}
+	}
+} ();
