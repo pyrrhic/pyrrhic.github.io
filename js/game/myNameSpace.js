@@ -229,7 +229,7 @@ ns.NavMesh = function() {
 ns.PathFinder = function() {
 	var buildPath = function(goalNode) {
 		var path = [];
-		path.add(goalNode);
+		path.push(goalNode);
 		var parent = goalNode.parent;
 
 		while (parent !== null) {
@@ -237,7 +237,7 @@ ns.PathFinder = function() {
 			parent = parent.parent;
 		}
 
-		return path;
+		return path.reverse();
 	}
 
 	var calculateCost = function(startNode, endNode) {
@@ -337,3 +337,26 @@ ns.PathFinder = function() {
 		}
 	}
 } ();
+
+ns.getDirectionalVelocity = function(start, end, maxVelocity) {
+		function getAngleBetweenTwoPositions(point1, point2) {
+			var xDiff = point1.x - point2.x;
+			var yDiff = point1.y - point2.y;
+
+			return Math.atan2(yDiff, xDiff);
+		}
+
+		var angle = getAngleBetweenTwoPositions(start, end);
+
+		var velocityX = maxVelocity * Math.cos(angle);
+		var velocityY = maxVelocity * Math.sin(angle);
+
+		if ((start.x > end.x && velocityX > 0) || (start.x < end.x && velocityX < 0)) {
+			velocityX *= -1;
+		}
+		if ((start.y > end.y && velocityY > 0) || (start.y < end.y && velocityY < 0)) {
+			velocityY *= -1;
+		}
+
+		return [velocityX, velocityY];
+}

@@ -16,6 +16,8 @@ window.onload = function() {
         game.load.tilemap("map", "assets/map.json", null, Phaser.Tilemap.TILED_JSON);
     }
 
+    var path = [];
+    var pathIndex = 1;
     var walls;
     var navMesh;
     var player;
@@ -52,19 +54,45 @@ window.onload = function() {
         }, window);
     }
 
+
     function update() {
         game.physics.arcade.collide(player, walls);
 
         var node = navMesh.getNodePositionIsIn(player.x, player.y);
         if (target.length > 0) {
             var targetNode = navMesh.getNodePositionIsIn(target[0], target[1]);
-            console.log(targetNode);
 
-            var path = ns.PathFinder.findPath(node, targetNode);
+            path = ns.PathFinder.findPath(node, targetNode);
             navMesh.resetParentsAndCosts();
+            
             console.log(path);
 
             target = [];
+        }
+
+        if (path.length> 0) {
+            player.body.velocity.x = 0;
+            player.body.velocity.y = 0;
+
+            var currentTarget = path[pathIndex];
+
+            var directionalVelocity = ns.getDirectionalVelocity(player, currentTarget, 60);
+            var velocityX = directionalVelocity[0];
+            var velocityY = directionalVelocity[1];
+
+            if (Math.abs(Math.round(player.x) - Math.round(currentTarget.x)) < 3 && Math.abs(Math.round(player.y) - Math.round(currentTarget.y)) < 3) {
+                if (pathIndex < path.length - 1) {
+                    pathIndex++;
+                }
+                else {
+                    path = [];
+                    pathIndex = 0;
+                }
+            }
+            else {
+                player.body.velocity.x = velocityX;
+                player.body.velocity.y = velocityY;
+            }
         }
 
         // player.body.velocity.y = 0;
@@ -83,10 +111,6 @@ window.onload = function() {
     }
 
     //NON-PHASER ENGINE FUNCTIONS
-    function movePlayerTowardsTargetNode(player, targetNode) {
-
-    }
-
     function renderableNodes(navMesh) {
         this.nodes = [];
         var nodes = navMesh.getNodes();
