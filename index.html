@@ -51,6 +51,8 @@ window.onload = function() {
         game.input.onDown.add(function() {
             target.push(game.input.mousePointer.x);
             target.push(game.input.mousePointer.y);
+            pathIndex = 1;
+            path = [];
         }, window);
     }
 
@@ -63,14 +65,13 @@ window.onload = function() {
             var targetNode = navMesh.getNodePositionIsIn(target[0], target[1]);
 
             path = ns.PathFinder.findPath(node, targetNode);
-            navMesh.resetParentsAndCosts();
-            
             console.log(path);
+            navMesh.resetParentsAndCosts();
 
             target = [];
         }
 
-        if (path.length> 0) {
+        if (path.length > 1) {
             player.body.velocity.x = 0;
             player.body.velocity.y = 0;
 
@@ -86,7 +87,7 @@ window.onload = function() {
                 }
                 else {
                     path = [];
-                    pathIndex = 0;
+                    pathIndex = 1;
                 }
             }
             else {

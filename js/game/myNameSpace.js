@@ -221,7 +221,7 @@ ns.NavMesh = function() {
 		for (var i = 0; i < keys.length; i++) {
 			var node = nodes[keys[i]];
 			node.parent = null;
-			node.cost = 999;
+			node.cost = 9999;
 		}
 	}
 }
@@ -309,6 +309,10 @@ ns.PathFinder = function() {
 			while (reachable.length > 0) {
 				var node = chooseNode(reachable);
 
+				if (node.getKey() === goalNode.getKey()) {
+					return buildPath(goalNode);
+				}
+
 				var index = reachable.map(function(n) { return n.getKey(); }).indexOf(node.getKey());
 				reachable.splice(index, 1);
 
@@ -321,15 +325,16 @@ ns.PathFinder = function() {
 						reachable.push(newNode);
 					}
 
+					// # If this is a new path, or a shorter path than what we have, keep it.
+		   //          if node.cost + 1 < adjacent.cost:
+		   //              adjacent.previous = node
+		   //              adjacent.cost = node.cost + 1
+
 					var tempCost = node.cost + calculateCost(node, newNode);
 					if (tempCost < newNode.cost) {
 						newNode.parent = node;
 						newNode.cost = tempCost;
 					}
-				}
-
-				if (node.getKey() === goalNode.getKey()) {
-					return buildPath(goalNode);
 				}
 			}
 
