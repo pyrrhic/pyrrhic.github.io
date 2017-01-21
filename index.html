@@ -102,12 +102,13 @@
   			return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
 		}
 
+		var windowOffset = 20;
 		function windowResized() {
-			resizeCanvas(windowWidth, windowHeight);
+			resizeCanvas(windowWidth - windowOffset, windowHeight - windowOffset);
 		}
 
 		function setup() {
-			createCanvas(windowWidth, windowHeight);
+			createCanvas(windowWidth - windowOffset, windowHeight - windowOffset);
 
 			runOnce();
 			runOnce();
