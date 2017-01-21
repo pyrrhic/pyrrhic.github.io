@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:fontSize="http://www.w3.org/1999/xhtml">
+<head>
+	<style type="text/css">
+		body {
+			background-color: rgb(55, 55, 55);	
+		}
+	</style>
+</head>
+<body>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/p5.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.sound.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.dom.js"></script>
+	<script>
+		function Particle(x, y) {
+			var position = createVector(x, y);
+			var history = [];
+
+			var moveDist = 30;//random(20, 30);
+			this.update = function() {
+				position.x += random(-moveDist, moveDist);
+				position.y += random(-moveDist, moveDist);
+				
+				if (position.x > width) {
+					position.x = width;
+				} else if (position.x < 0) {
+					position.x = 0;
+				}
+
+				if (position.y > height) {
+					position.y = height;
+				} else if (position.y < 0) {
+					position.y = 0;
+				}
+
+				history.push(createVector(position.x, position.y));
+
+				if (history.length > 225) {
+					history.splice(0, 1);
+				}
+			}
+
+			this.draw = function() {
+				// noFill();
+				
+				// beginShape();
+				for (var i = 0; i < history.length; i++) {
+					var h = history[i];
+					noStroke();
+					fill(color(i, 255, 255));
+					ellipse(h.x, h.y, i/2, i/2);
+					// vertex(h.x, h.y);
+				}
+				// endShape();
+			}
+		}
+
+		var windowOffset = 20;		
+		function windowResized() {
+			resizeCanvas(windowWidth - windowOffset, windowHeight - windowOffset);
+		}
+
+		function mousePressed() {
+			particles.push(new Particle(mouseX, mouseY));
+			hint = false;
+		}
+
+		var particles = [];
+		function setup() {
+			createCanvas(windowWidth - windowOffset, windowHeight - windowOffset);
+		}
+
+		var hint = true;
+		function draw() {
+			background(55, 55, 55);
+			
+			if (hint) {
+				textSize(32);
+				fill(240);
+				text("Click anywhere!", (windowWidth - windowOffset) / 2, (windowHeight -windowOffset) / 2);
+			}
+
+			for (var i = 0; i < particles.length; i++) {
+				particles[i].update();
+				particles[i].draw();
+			}
+
+			//console.log(frameRate());
+		}
+	</script>
+</body>
+</html>
